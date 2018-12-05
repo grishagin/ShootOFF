@@ -121,8 +121,8 @@ public class Configuration {
 
 	private static final String DEFAULT_CONFIG_FILE = "shootoff.properties";
 
-	private static final int DEFAULT_DISPLAY_WIDTH = 640;
-	private static final int DEFAULT_DISPLAY_HEIGHT = 480;
+	private static final String DEFAULT_DISPLAY_WIDTH = "shootoff.videowidth";
+	private static final String DEFAULT_DISPLAY_HEIGHT = "shootoff.videoheight";
 
 	private InputStream configInput;
 	private final String configName;
@@ -157,9 +157,8 @@ public class Configuration {
 	private final Set<String> messagesChimeMuted = new HashSet<>();
 	private boolean showedPerspectiveMessage = false;
 
-	private int displayWidth = DEFAULT_DISPLAY_WIDTH;
-
-	private int displayHeight = DEFAULT_DISPLAY_HEIGHT;
+	//private int displayWidth = DEFAULT_DISPLAY_WIDTH;
+	//private int displayHeight = DEFAULT_DISPLAY_HEIGHT;
 
 	private final boolean debugShotsRecordToFiles = false;
 
@@ -174,6 +173,9 @@ public class Configuration {
 	private Optional<Double> poiAdjustmentY = Optional.empty();
 	private boolean adjustingPOI = false;
 	private int poiAdjustmentCount = 0;
+
+	private int displayWidth = 640;
+	private int displayHeight = 480;
 
 	private static Configuration config = null;
 
@@ -317,6 +319,15 @@ public class Configuration {
 		}
 		setRecordingCameras(recordingCameras);
 
+		//video width from config file
+		if (prop.containsKey(DEFAULT_DISPLAY_WIDTH)) {
+			setDisplayWidth(Integer.parseInt(prop.getProperty(DEFAULT_DISPLAY_WIDTH)));
+		}
+		//video height from config file 
+		if (prop.containsKey(DEFAULT_DISPLAY_HEIGHT)) {
+			setDisplayHeight(Integer.parseInt(prop.getProperty(DEFAULT_DISPLAY_HEIGHT)));
+		}
+		
 		if (prop.containsKey(MARKER_RADIUS_PROP)) {
 			setMarkerRadius(Integer.parseInt(prop.getProperty(MARKER_RADIUS_PROP)));
 		}
@@ -485,6 +496,9 @@ public class Configuration {
 		prop.setProperty(USE_MALFUNCTIONS_PROP, String.valueOf(useMalfunctions));
 		prop.setProperty(MALFUNCTIONS_PROBABILITY_PROP, String.valueOf(malfunctionsProbability));
 		prop.setProperty(MUTED_CHIME_MESSAGES, mutedChimeMessages.toString());
+		prop.setProperty(DEFAULT_DISPLAY_WIDTH, String.valueOf(displayWidth));
+		prop.setProperty(DEFAULT_DISPLAY_HEIGHT, String.valueOf(displayHeight));
+
 
 		if (getArenaPosition().isPresent()) {
 			final Point2D arenaPosition = getArenaPosition().get();
@@ -702,7 +716,15 @@ public class Configuration {
 			webcams.put(webcamNames.get(i), configuredCameras.get(i));
 		}
 	}
-
+	
+	public void setDisplayWidth(int displayWidth) {
+		this.displayWidth = displayWidth;
+	}
+	
+	public void setDisplayHeight(int displayHeight) {
+		this.displayHeight = displayHeight;
+	}
+	
 	public void setMarkerRadius(int markRadius) {
 		markerRadius = markRadius;
 	}

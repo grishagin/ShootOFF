@@ -107,7 +107,7 @@ public class FileSlide extends Slide {
 			}
 		});
 
-		addSlideControlButton("Exit", (evnet) -> {
+		addSlideControlButton("Exit", (event) -> {
 			mainWindow.close();
 		});
 	}

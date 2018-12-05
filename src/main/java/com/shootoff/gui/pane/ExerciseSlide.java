@@ -91,6 +91,7 @@ public class ExerciseSlide extends Slide implements PluginListener, ItemSelectio
 		this.exerciseListener = exerciseListener;
 		config = Configuration.getConfig();
 
+		/*
 		addSlideControlButton("Get Exercises", (event) -> {
 			final Optional<FXMLLoader> loader = createPluginManagerStage();
 
@@ -135,6 +136,7 @@ public class ExerciseSlide extends Slide implements PluginListener, ItemSelectio
 				sessionViewerSlide.showBody();
 			}
 		});
+		*/
 
 		noneButton = addNoneButton();
 
@@ -220,7 +222,7 @@ public class ExerciseSlide extends Slide implements PluginListener, ItemSelectio
 		return exerciseListener;
 	}
 
-	private void startRecordingSession() {
+	public void startRecordingSession() {
 		config.setSessionRecorder(new SessionRecorder());
 
 		for (final CameraManager cm : config.getRecordingManagers()) {

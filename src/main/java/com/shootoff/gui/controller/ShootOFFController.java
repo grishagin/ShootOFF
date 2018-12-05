@@ -19,6 +19,7 @@
 package com.shootoff.gui.controller;
 
 import java.awt.Toolkit;
+import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -30,6 +31,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+
+import javax.imageio.ImageIO;
+
 import java.util.Optional;
 import java.util.Set;
 
@@ -53,11 +57,17 @@ import com.shootoff.gui.CanvasManager;
 import com.shootoff.gui.ExerciseListener;
 import com.shootoff.gui.Resetter;
 import com.shootoff.gui.ShotEntry;
+import com.shootoff.gui.pane.ArenaCoursesSlide;
 import com.shootoff.gui.pane.ExerciseSlide;
 import com.shootoff.gui.pane.FileSlide;
+import com.shootoff.gui.pane.PluginManagerSlide;
+import com.shootoff.gui.pane.PreferencesSlide;
 import com.shootoff.gui.pane.ProjectorSlide;
+import com.shootoff.gui.pane.SessionViewerSlide;
 import com.shootoff.gui.pane.ShotSectorPane;
+import com.shootoff.gui.pane.TargetEditorSlide;
 import com.shootoff.gui.pane.TargetSlide;
+import com.shootoff.gui.pane.TargetSlide.Mode;
 import com.shootoff.plugins.ExerciseMetadata;
 import com.shootoff.plugins.ProjectorTrainingExerciseBase;
 import com.shootoff.plugins.TrainingExercise;
@@ -68,8 +78,10 @@ import com.shootoff.plugins.engine.PluginEngine;
 import com.shootoff.targets.CameraViews;
 import com.shootoff.targets.Target;
 import com.shootoff.targets.TargetRegion;
+import com.shootoff.util.SwingFXUtils;
 import com.shootoff.util.SystemInfo;
 import com.shootoff.util.TimerPool;
+import com.shootoff.gui.controller.TargetEditorController;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import javafx.application.Platform;
@@ -83,7 +95,9 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.SnapshotParameters;
 import javafx.scene.control.Alert;
+//import javafx.scene.control.Button;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
@@ -103,8 +117,10 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Shape;
+import javafx.stage.FileChooser;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
+import javafx.scene.control.MenuBar;
 
 public class ShootOFFController implements CameraConfigListener, CameraErrorView, CameraViews, Closeable, Resetter,
 		TrainingExerciseView, ExerciseListener {
@@ -117,7 +133,351 @@ public class ShootOFFController implements CameraConfigListener, CameraErrorView
 	@FXML private VBox buttonsContainer;
 	@FXML private Pane trainingExerciseContainer;
 	@FXML private ScrollPane trainingExerciseScrollPane;
+	
+	@FXML private MenuBar menuBar;
+	
+	@FXML
+	private void handleExitAction(final ActionEvent event)
+	{
+		exitApplication();
+	}
+	
+	private void exitApplication() {
+		this.close();
+	}
+	
+	@FXML
+	private void handlePreferencesAction(final ActionEvent event)
+	{
+		showPreferencesSlide();
+	}
+	
+	@FXML
+	private void handleSaveFeedImage(final ActionEvent event)
+	{
+		saveFeedImage();
+	}
+	
+	@FXML
+	private void handleProjector(final ActionEvent event)
+	{
+		showProjectorArena();
+	}
 
+	@FXML
+	private void handleAddTarget(final ActionEvent event)
+	{
+		addTarget();
+	}
+	
+	
+	@FXML
+	private void handleEditTarget(final ActionEvent event)
+	{
+		editTarget();
+	}
+	@FXML
+	private void handleCreateTarget(final ActionEvent event)
+	{
+		createTarget();
+	}
+	
+	@FXML
+	private void handleChooseExercise(final ActionEvent event)
+	{
+		chooseExercise();
+	}
+	
+	@FXML
+	private void handleGetExercises(final ActionEvent event)
+	{
+		getExercises();
+	}
+	
+	@FXML
+	private void handleRecordSession(final ActionEvent event) 
+	{
+		recordSession(event);
+	}
+	
+	@FXML
+	private void handleViewSession(final ActionEvent event) 
+	{
+		viewSession();
+	}
+	
+	private static PreferencesController preferencesController = null;
+
+	private void showPreferencesSlide() {
+
+		if (preferencesController == null) {
+			final FXMLLoader loader = new FXMLLoader(
+					getClass().getClassLoader().getResource("com/shootoff/gui/Preferences.fxml"));
+			try {
+				loader.load();
+			} catch (final IOException e) {
+				logger.error("Cannot load Preferences.fxml", e);
+				return;
+			}
+
+			preferencesController = (PreferencesController) loader.getController();
+			preferencesController.setConfig((Stage) controlsContainer.getScene().getWindow(),
+					Configuration.getConfig(), projectorSlide, this);
+		}
+
+		final PreferencesSlide preferencesSlide = new PreferencesSlide(controlsContainer, bodyContainer,
+				preferencesController);
+		preferencesSlide.setOnSlideHidden(() -> {
+			if (preferencesSlide.isSaved()) preferencesSlide.hide();
+		});
+		preferencesSlide.showControls();
+		preferencesSlide.showBody();
+	}
+	
+	private void saveFeedImage() {
+		final Node container = this.getSelectedCameraContainer();
+		final RenderedImage renderedImage = SwingFXUtils
+				.fromFXImage(container.snapshot(new SnapshotParameters(), null), null);
+
+		final FileChooser fileChooser = new FileChooser();
+		fileChooser.setTitle("Save Feed Image");
+		fileChooser.getExtensionFilters().addAll(
+				new FileChooser.ExtensionFilter("Graphics Interchange Format (*.gif)", "*.gif"),
+				new FileChooser.ExtensionFilter("Portable Network Graphic (*.png)", "*.png"));
+
+		final File feedFile = fileChooser.showSaveDialog(controlsContainer.getScene().getWindow());
+
+		if (feedFile != null) {
+			final String extension = fileChooser.getSelectedExtensionFilter().getExtensions().get(0).substring(2);
+			File imageFile;
+
+			if (feedFile.getPath().endsWith(extension)) {
+				imageFile = feedFile;
+			} else {
+				imageFile = new File(feedFile.getPath() + "." + extension);
+			}
+
+			try {
+				ImageIO.write(renderedImage, extension, imageFile);
+			} catch (final IOException e) {
+				logger.error("Error saving feed image", e);
+			}
+		}
+	}
+	
+	private void showProjectorArena() {
+		projectorSlide.startArena();
+		projectorSlide.showControls();
+	}
+
+	private void addTarget() {
+		targetPane.mode = Mode.ADD;
+		targetPane.showControls();
+		targetPane.showBody();
+	}
+	
+	private void editTarget() {
+		targetPane.mode = Mode.EDIT;
+		targetPane.showControls();
+		targetPane.showBody();
+	}
+	
+	private void recordSession(final ActionEvent event) {
+		if (config.getSessionRecorder().isPresent()) {
+			exerciseSlide.stopRecordingSession();
+
+			((MenuItem) event.getSource()).setText("Record Session");
+		} else {
+			exerciseSlide.startRecordingSession();
+
+			((MenuItem) event.getSource()).setText("Stop Recording");
+		}
+
+		exerciseSlide.hide();
+	}
+	
+	private Optional<FXMLLoader> createSessionViewerStage() {
+		final FXMLLoader loader = new FXMLLoader(
+				getClass().getClassLoader().getResource("com/shootoff/gui/SessionViewer.fxml"));
+		try {
+			loader.load();
+		} catch (final IOException e) {
+			logger.error("Cannot load SessionViewer.fxml", e);
+			return Optional.empty();
+		}
+
+		return Optional.of(loader);
+	}
+	
+	private void viewSession() {
+		final Optional<FXMLLoader> loader = createSessionViewerStage();
+
+		if (loader.isPresent()) {
+			final SessionViewerController sessionViewerController = (SessionViewerController) loader.get()
+					.getController();
+			sessionViewerController.init(Configuration.getConfig());
+
+			final SessionViewerSlide sessionViewerSlide = new SessionViewerSlide(controlsContainer, bodyContainer,
+					sessionViewerController);
+			sessionViewerSlide.showControls();
+			sessionViewerSlide.showBody();
+		}
+	}
+	
+	private Optional<FXMLLoader> createTargetEditorStage() {
+		final FXMLLoader loader = new FXMLLoader(
+				getClass().getClassLoader().getResource("com/shootoff/gui/TargetEditor.fxml"));
+		try {
+			loader.load();
+		} catch (final IOException e) {
+			logger.error("Cannot load TargetEditor.fxml", e);
+			return Optional.empty();
+		}
+
+		return Optional.of(loader);
+	}
+	
+	private void createTarget() {
+		final Optional<FXMLLoader> loader = createTargetEditorStage();
+
+		if (loader.isPresent()) {
+			final TargetEditorController editorController = (TargetEditorController) loader.get().getController();
+
+			final Image currentFrame;
+
+			if (this.isArenaViewSelected()) {
+				final Pane backgroundPane = new Pane();
+				backgroundPane.setStyle("-fx-background-color: lightgray;");
+				backgroundPane.setPrefSize(CameraManager.DEFAULT_FEED_WIDTH, CameraManager.DEFAULT_FEED_HEIGHT);
+				currentFrame = backgroundPane.snapshot(new SnapshotParameters(), null);
+			} else {
+				final CameraManager currentCamera = this.getSelectedCameraManager();
+				currentFrame = currentCamera.getCurrentFrame();
+			}
+
+			editorController.init(currentFrame, targetPane);
+
+			final TargetEditorSlide targetEditorSlide = new TargetEditorSlide(controlsContainer, bodyContainer,
+					editorController);
+			targetEditorSlide.showControls();
+			targetEditorSlide.showBody();
+		}
+	}
+	
+	private void chooseExercise() {
+		exerciseSlide.hide();
+		exerciseSlide.showControls();
+		exerciseSlide.showBody();
+	}
+	
+	private Optional<FXMLLoader> createPluginManagerStage() {
+		final FXMLLoader loader = new FXMLLoader(
+				getClass().getClassLoader().getResource("com/shootoff/gui/PluginManager.fxml"));
+		try {
+			loader.load();
+		} catch (final IOException e) {
+			logger.error("Cannot load SessionViewer.fxml", e);
+			return Optional.empty();
+		}
+
+		return Optional.of(loader);
+	}
+	
+	private void getExercises() {
+		final Optional<FXMLLoader> loader = createPluginManagerStage();
+
+		if (loader.isPresent()) {
+			final PluginManagerController pluginManagerController = (PluginManagerController) loader.get()
+					.getController();
+			pluginManagerController.init(this.getPluginEngine(),
+					(Stage) bodyContainer.getScene().getWindow());
+
+			final PluginManagerSlide pluginViewerSlide = new PluginManagerSlide(controlsContainer, bodyContainer,
+					pluginManagerController);
+			pluginViewerSlide.showControls();
+			pluginViewerSlide.showBody();
+		}
+	}
+	
+	@FXML
+	private void handleStartProjector(final ActionEvent event){
+		startProjector();
+	}
+	
+	@FXML
+	private void handleCalibrateProjector(final ActionEvent event){
+		calibrateProjector();
+	}
+	
+	@FXML
+	private void handleChooseProjectorBackground(final ActionEvent event){
+		chooseProjectorBackground();
+	}
+	
+	@FXML
+	private void handleChooseProjectorCourse(final ActionEvent event){
+		chooseProjectorCourse();
+	}
+	
+	@FXML
+	private void handleSaveProjectorCourse(final ActionEvent event){
+		saveProjectorCourse();
+	}
+	
+	@FXML
+	private void handleClearProjectorCourse(final ActionEvent event){
+		clearProjectorCourse();
+	}
+	
+	//projectorSlide = new ProjectorSlide(controlsContainer, bodyContainer, this, shootOFFStage,
+		//	trainingExerciseContainer, this, exerciseSlide);
+	private void startProjector(){
+		projectorSlide.startArena();
+		projectorSlide.showControls();
+	}
+	//private Optional<CalibrationManager> calibrationManager = Optional.empty();
+
+	private void calibrateProjector(){
+		if (!projectorSlide.calibrationManager.isPresent()) return;
+
+		final CalibrationManager calibrator = projectorSlide.calibrationManager.get();
+
+		if (!calibrator.isCalibrating()) {
+			calibrator.enableCalibration();
+		} else {
+			calibrator.stopCalibration();
+		}
+	}
+	
+	private void chooseProjectorBackground(){
+		projectorSlide.backgroundsSlide.showControls();
+		projectorSlide.backgroundsSlide.showBody();
+	}
+	
+	private void chooseProjectorCourse(){
+		final ArenaCoursesSlide coursesSlide = new ArenaCoursesSlide(controlsContainer, bodyContainer, 
+				projectorSlide.arenaPane,
+				projectorSlide.shootOffStage);
+		coursesSlide.setOnSlideHidden(() -> {
+			if (coursesSlide.choseCourse()) {
+				projectorSlide.hide();
+			}
+		});
+		coursesSlide.showControls();
+		coursesSlide.showBody();
+	}
+	
+	private void saveProjectorCourse(){
+		
+	}
+	
+	private void clearProjectorCourse(){
+		
+	}
+	/*
+	***************************************************
+	*/
+	
 	private TargetSlide targetPane;
 	private ExerciseSlide exerciseSlide;
 	private ProjectorSlide projectorSlide;

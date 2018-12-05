@@ -34,6 +34,8 @@ eclipse {
 def javaHome = System.properties['java.home']
 
 ext.extProp = new Properties()
+//version.properties file path has to be absolute, else eclipse import fails
+//at the same time, gradle build fails if the path is absolute
 extProp.load(new FileInputStream("src/main/resources/version.properties"))
 def version = extProp["version"]
 

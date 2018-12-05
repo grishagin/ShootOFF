@@ -49,11 +49,11 @@ public class TargetSlide extends Slide implements TargetListener, ItemSelectionL
 
 	private final ItemSelectionPane<File> itemPane = new ItemSelectionPane<>(false, this);
 
-	private enum Mode {
+	public enum Mode {
 		ADD, EDIT
 	};
 
-	private Mode mode;
+	public Mode mode;
 
 	public TargetSlide(Pane parentControls, Pane parentBody, CameraViews cameraViews) {
 		super(parentControls, parentBody);
@@ -61,6 +61,7 @@ public class TargetSlide extends Slide implements TargetListener, ItemSelectionL
 		this.parentControls = parentControls;
 		this.parentBody = parentBody;
 
+		/*
 		addSlideControlButton("Add Target", (event) -> {
 			mode = Mode.ADD;
 			showBody();
@@ -97,6 +98,7 @@ public class TargetSlide extends Slide implements TargetListener, ItemSelectionL
 			mode = Mode.EDIT;
 			showBody();
 		});
+		*/
 
 		this.cameraViews = cameraViews;
 

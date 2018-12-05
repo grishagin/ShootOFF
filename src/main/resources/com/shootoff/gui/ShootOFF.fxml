@@ -16,7 +16,63 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.AnchorPane?>
 
-<VBox fx:id="shootOffContainer" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.shootoff.gui.controller.ShootOFFController">
+
+
+<VBox fx:id="shootOffContainer" xmlns="http://javafx.com/javafx/8" 
+xmlns:fx="http://javafx.com/fxml/1" 
+fx:controller="com.shootoff.gui.controller.ShootOFFController">
+
+	<MenuBar fx:id="menuBar">
+		<menus>
+			<Menu text="File">
+				<items>
+	           		<MenuItem text="Preferences" onAction="#handlePreferencesAction"/>
+	           		<MenuItem text="Save Feed Image" onAction="#handleSaveFeedImage"/>
+	           		<MenuItem text="Projector" onAction="#handleProjector"/>
+	           		<SeparatorMenuItem />
+	           		<MenuItem text="Exit" onAction="#handleExitAction"/>
+				</items>
+			</Menu>
+			<Menu text="Targets">
+				<items>
+	           		<MenuItem text="Add Target" onAction="#handleAddTarget"/>
+	           		<MenuItem text="Edit Target" onAction="#handleEditTarget"/>
+	           		<MenuItem text="Create Target" onAction="#handleCreateTarget"/>
+				</items>
+			</Menu>
+			
+			<Menu text="Sessions">
+				<items>
+	           		<MenuItem text="Record Session" onAction="#handleRecordSession"/>
+	           		<MenuItem text="View Sessions" onAction="#handleViewSession"/>
+				</items>
+			</Menu>
+			
+			<Menu text="Training">
+				<items>
+	           		<MenuItem text="Choose Exercise" onAction="#handleChooseExercise"/>
+	           		<MenuItem text="Get Exercises" onAction="#handleGetExercises"/>
+				</items>
+			</Menu>
+			
+			<Menu text="Projector">
+				<items>
+	           		<MenuItem text="Start Arena" onAction="#handleStartProjector"/>
+	           		<MenuItem text="Start Calibration" onAction="#handleCalibrateProjector"/>
+	           		<MenuItem text="Choose Background..." onAction="#handleChooseProjectorBackground"/>
+				</items>
+				<Menu text="Courses...">
+					<items>
+		           		<MenuItem text="Choose Course" onAction="#handleChooseProjectorCourse"/>
+		           		<MenuItem text="Save Course..." onAction="#handleSaveProjectorCourse"/>
+		           		<MenuItem text="Clear Course" onAction="#handleClearProjectorCourse"/>
+					</items>	
+				</Menu>
+			</Menu>
+			
+		</menus>
+	</MenuBar>
+    
    <children>
       <HBox fx:id="controlsContainer" alignment="TOP_CENTER" minHeight="160.0" prefWidth="200.0" spacing="175.0">
          <children>

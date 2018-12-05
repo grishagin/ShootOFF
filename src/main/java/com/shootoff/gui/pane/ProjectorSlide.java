@@ -44,16 +44,16 @@ public class ProjectorSlide extends Slide implements CalibrationConfigurator {
 	private final Pane parentBody;
 	private final Configuration config;
 	private final CameraViews cameraViews;
-	private final Stage shootOffStage;
+	public final Stage shootOffStage;
 	private final Pane trainingExerciseContainer;
 	private final Resetter resetter;
 	private final ExerciseSlide exerciseSlide;
 	private final Button calibrateButton;
 
-	private ArenaBackgroundsSlide backgroundsSlide;
+	public ArenaBackgroundsSlide backgroundsSlide;
 
-	private ProjectorArenaPane arenaPane;
-	private Optional<CalibrationManager> calibrationManager = Optional.empty();
+	public ProjectorArenaPane arenaPane;
+	public Optional<CalibrationManager> calibrationManager = Optional.empty();
 
 	public ProjectorSlide(Pane parentControls, Pane parentBody, CameraViews cameraViews, Stage shootOffStage,
 			Pane trainingExerciseContainer, Resetter resetter, ExerciseSlide exerciseSlide) {
